@@ -1,6 +1,8 @@
 import argparse
 import sys
-
+import struct
+import socket
+import math
 
 ###########################################################
 ####################### YOUR CODE #########################
@@ -11,7 +13,10 @@ def send_data(server_ip, server_port, data):
     '''
     Send data to server in address (server_ip, server_port).
     '''
-    pass
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        client.connect((server_ip, server_port))
+        client.send(data.encode('utf-8')[::-1])
 
 
 ###########################################################
