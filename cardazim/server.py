@@ -60,6 +60,8 @@ def listener_server(server_ip: str, server_port: int) -> None:
     :param server_port:
     :type int:
     """
+    print_lock = threading.Lock()
+
     with init_server_socket(server_ip, server_port) as server_socket:
 
         while True:
