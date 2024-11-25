@@ -1,29 +1,49 @@
 import socket
 import argparse
 import sys
+import threading
 
 BACKLOG_SIZE = 1
 
-def read_all_data(socket: socket.socket) -> str:
+
+def listener_thread(
+        print_lock: threading.Lock,
+        client_socket: socket.socket
+        ) -> None:
     """
-    Reads all the data from the socket and then CLOSES it.
-    
-    :param socket: The socket from which the data is read.
+    Reads all the data from a socket (until the connection is closed)
+    and syncronuously prints it to the screen.
+
+    :param print_lock: The lock that is used for syncronizing the prints between other threads.
+    :type threading.Lock:
+    :param client_socket: The socket from which the data is read.
     :type socket.socket:
-    :returns: The data as an 'utf-8' string.
-    :rtype: str
+
     """
     from_client = ''
-    
-    with socket:
+    with client_socket:
         while True:
-            data = socket.recv(4096)
+            data = client_socket.recv(4096)
             if not data:
                 break
-
             from_client += data.decode('utf8')
+        
+    with print_lock:
+        print (f'Received data: {from_client}')
 
-    return from_client
+
+def listener_server(server_ip: str, server_port: int) -> None:
+    """
+    Opens a server on 'server_ip' at port 'server_port'.
+    The server opens a listening thread for each connection
+    and prints to the screen every message that it recieves.
+    
+    :param server_ip: 
+    :type str:
+    :param server_port:
+    :type int:
+    """
+    print_lock = threading.Lock()
 
 
 def init_server_socket(server_ip: str, server_port: int) -> None:
@@ -57,10 +77,19 @@ def listener_server(server_ip: str, server_port: int) -> None:
 
         while True:
             client_socket, client_addr = server_socket.accept()
+            
+            threading.Thread(target=listener_thread, kwargs={"print_lock":print_lock, "client_socket":client_socket}).start()
 
-            from_client = read_all_data(client_socket)
-            print (f'Received data: {from_client}')
+    
+    # Wait for all threads to finish.
+    # 
+    # this code is unreachable, but if one day I'd want to support quitting while running the server,
+    # I would have then to break from the loop and reach this code.
+    for thread in threading.enumerate():
+        if thread is not threading.main_thread():  # Skip the main thread
+            thread.join()
 
+            
 
 def get_args() -> argparse.Namespace:
     """
