@@ -23,11 +23,14 @@ def read_all_data(socket: socket.socket) -> str:
     return from_client
 
 
-def init_server_socket(server_ip: str, server_port: int):
+def init_server_socket(server_ip: str, server_port: int) -> None:
     """
     Creates and initializes a socket for the server.
 
-    
+    :param server_ip: 
+    :type str:
+    :param server_port:
+    :type int:
     """
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
