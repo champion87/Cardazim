@@ -2,22 +2,28 @@ import socket
 import argparse
 import sys
 from utils import unpack_message
+import threading
 
 BACKLOG_SIZE = 1
 RECV_BUFSIZE = 4096
 
-def read_all_data(socket: socket.socket) -> str:
+
+def listener_thread(
+        print_lock: threading.Lock,
+        client_socket: socket.socket
+        ) -> None:
     """
-    Reads the message from the socket and then CLOSES it.
-    
-    :param socket: The socket from which the data is read.
+    Reads all the data from a socket (until the connection is closed)
+    and syncronuously prints it to the screen.
+
+    :param print_lock: The lock that is used for syncronizing the prints between other threads.
+    :type threading.Lock:
+    :param client_socket: The socket from which the data is read.
     :type socket.socket:
-    :returns: The data as an 'utf-8' string.
-    :rtype: str
+
     """
     from_client = b''
-    
-    with socket:
+    with client_socket:
         while True:
             if not (data := socket.recv(RECV_BUFSIZE)):
                 break
@@ -58,10 +64,19 @@ def run_listener_server(server_ip: str, server_port: int) -> None:
 
         while True:
             client_socket, client_addr = server_socket.accept()
+            
+            threading.Thread(target=listener_thread, kwargs={"print_lock":print_lock, "client_socket":client_socket}).start()
 
-            from_client = read_all_data(client_socket)
-            print (f'Received message: {from_client}')
+    
+    # Wait for all threads to finish.
+    # 
+    # this code is unreachable, but if one day I'd want to support quitting while running the server,
+    # I would have then to break from the loop and reach this code.
+    for thread in threading.enumerate():
+        if thread is not threading.main_thread():  # Skip the main thread
+            thread.join()
 
+            
 
 def get_args() -> argparse.Namespace:
     """
