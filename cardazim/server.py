@@ -2,6 +2,8 @@ import socket
 import argparse
 import sys
 
+BACKLOG_SIZE = 1
+
 def read_all_data(socket: socket.socket) -> str:
     """
     Reads all the data from the socket and then CLOSES it.
@@ -13,9 +15,9 @@ def read_all_data(socket: socket.socket) -> str:
     """
     from_client = ''
     
-    with client_socket:
+    with socket:
         while True:
-            data = client_socket.recv(4096)
+            data = socket.recv(4096)
             if not data:
                 break
 
@@ -36,7 +38,7 @@ def init_server_socket(server_ip: str, server_port: int) -> None:
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((server_ip, server_port))
-    server_socket.listen(5) # This is how many queued connections do we support.
+    server_socket.listen(BACKLOG_SIZE) # This is how many queued connections do we support.
 
     return server_socket
 
