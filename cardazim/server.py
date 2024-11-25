@@ -3,6 +3,7 @@ import argparse
 import sys
 import threading
 from utils import unpack_message
+import threading
 
 BACKLOG_SIZE = 1
 
@@ -12,7 +13,7 @@ def listener_thread(
         client_socket: socket.socket
         ) -> None:
     """
-    Reads all the data from a socket (until the connection is closed)
+    Reads the message from a socket (until the connection is closed)
     and syncronuously prints it to the screen.
 
     :param print_lock: The lock that is used for syncronizing the prints between other threads.
@@ -22,8 +23,7 @@ def listener_thread(
 
     """
     from_client = b''
-    
-    with socket:
+    with client_socket:
         while True:
             data = client_socket.recv(4096)
             if not data:
