@@ -39,7 +39,17 @@ def init_server_socket(server_ip: str, server_port: int) -> None:
 
     return server_socket
 
-def listener_server(server_ip: str, server_port: int):
+def listener_server(server_ip: str, server_port: int) -> None:
+    """
+    Opens a server on 'server_ip' at port 'server_port'.
+    The server opens a listening thread for each connection
+    and prints to the screen every message that it recieves.
+    
+    :param server_ip: 
+    :type str:
+    :param server_port:
+    :type int:
+    """
     with init_server_socket(server_ip, server_port) as server_socket:
 
         while True:
