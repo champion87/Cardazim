@@ -2,25 +2,48 @@ import socket
 import argparse
 import sys
 
+def read_all_data(socket: socket.socket) -> str:
+    """
+    Reads all the data from the socket and then CLOSES it.
+    
+    :param socket: The socket from which the data is read.
+    :type socket.socket:
+    :returns: The data as an 'utf-8' string.
+    """
+    from_client = ''
+    
+    with client_socket:
+        while True:
+            data = client_socket.recv(4096)
+            if not data:
+                break
+
+            from_client += data.decode('utf8')
+
+    return from_client
+
+
+def init_server_socket(server_ip: str, server_port: int):
+    """
+    Creates and initializes a socket for the server.
+
+    
+    """
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((server_ip, server_port))
+    server_socket.listen(0)
+
+    return server_socket
+
 def listener_server(server_ip: str, server_port: int):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.bind((server_ip, server_port))
-        server_socket.listen(0)
+    with init_server_socket(server_ip, server_port) as server_socket:
 
         while True:
             client_socket, client_addr = server_socket.accept()
 
-            with client_socket:
-                from_client = ''
-
-                while True:
-                    data = client_socket.recv(4096)
-                    if not data:
-                        break
-
-                    from_client += data.decode('utf8')
-                print (f'Received data: {from_client}')
+            from_client = read_all_data(client_socket)
+            print (f'Received data: {from_client}')
 
 
 def get_args():
