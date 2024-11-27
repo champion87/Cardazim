@@ -1,19 +1,20 @@
 import socket
 import argparse
 import sys
+from utils import unpack_message
 
 BACKLOG_SIZE = 1
 
 def read_all_data(socket: socket.socket) -> str:
     """
-    Reads all the data from the socket and then CLOSES it.
+    Reads the message from the socket and then CLOSES it.
     
     :param socket: The socket from which the data is read.
     :type socket.socket:
     :returns: The data as an 'utf-8' string.
     :rtype: str
     """
-    from_client = ''
+    from_client = b''
     
     with socket:
         while True:
@@ -21,9 +22,9 @@ def read_all_data(socket: socket.socket) -> str:
             if not data:
                 break
 
-            from_client += data.decode('utf8')
+            from_client += data
 
-    return from_client
+    return unpack_message(from_client)
 
 
 def init_server_socket(server_ip: str, server_port: int) -> None:
@@ -59,7 +60,7 @@ def listener_server(server_ip: str, server_port: int) -> None:
             client_socket, client_addr = server_socket.accept()
 
             from_client = read_all_data(client_socket)
-            print (f'Received data: {from_client}')
+            print (f'Received message: {from_client}')
 
 
 def get_args() -> argparse.Namespace:
