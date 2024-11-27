@@ -9,6 +9,27 @@ import threading
 BACKLOG_SIZE = 1
 RECV_BUFSIZE = 4096
 
+def read_all_data(socket: socket.socket) -> str:
+    """
+    Reads the message from the socket and then CLOSES it.
+    
+    :param socket: The socket from which the data is read.
+    :type socket.socket:
+    :returns: The data as an 'utf-8' string.
+    :rtype: str
+    """
+    from_client = b''
+    
+    with socket:
+        while True:
+            data = socket.recv(4096)
+            if not data:
+                break
+
+            from_client += data
+
+    return unpack_message(from_client)
+
 
 def listener_thread(
         print_lock: threading.Lock,
@@ -24,13 +45,7 @@ def listener_thread(
     :type socket.socket:
 
     """
-    from_client = b''
-    with client_socket:
-        while True:
-            if not (data := socket.recv(RECV_BUFSIZE)):
-                break
-            from_client += data
-    msg = unpack_message(from_client)
+    msg = read_all_data(client_socket)
 
     with print_lock:
         print (f'Received message: {msg}')
