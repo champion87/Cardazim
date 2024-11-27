@@ -17,7 +17,7 @@ def send_data(server_ip, server_port, data):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
         client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         client.connect((server_ip, server_port))
-        client.sendall(data.encode('utf-8')[::-1])
+        client.sendall(pack_message(data))
 
 
 ###########################################################
