@@ -3,6 +3,7 @@ import argparse
 import sys
 from utils import unpack_message
 import threading
+from utils import unpack_message
 
 BACKLOG_SIZE = 1
 RECV_BUFSIZE = 4096
@@ -27,10 +28,11 @@ def listener_thread(
         while True:
             if not (data := socket.recv(RECV_BUFSIZE)):
                 break
-
             from_client += data
+    msg = unpack_message(from_client)
 
-    return unpack_message(from_client)
+    with print_lock:
+        print (f'Received message: {msg}')
 
 
 def init_server_socket(server_ip: str, server_port: int) -> None:
