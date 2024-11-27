@@ -3,6 +3,7 @@ import argparse
 import sys
 from utils import unpack_message
 import threading
+from utils import unpack_message
 
 BACKLOG_SIZE = 1
 RECV_BUFSIZE = 4096
