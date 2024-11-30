@@ -3,22 +3,19 @@ import sys
 import struct
 import socket
 import math
-from utils import pack_message
+from connection import Connection
 
 ###########################################################
 ####################### YOUR CODE #########################
 ###########################################################
 
 
-def send_data(server_ip, server_port, data):
+def send_data(server_ip: str, server_port: int, data: str):
     '''
     Send data to server in address (server_ip, server_port).
     '''
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-        client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        client.connect((server_ip, server_port))
-        client.sendall(pack_message(data))
-
+    with Connection.connect(server_ip, server_port) as client:
+        client.send_message(data.encode("utf-8"))
 
 ###########################################################
 ##################### END OF YOUR CODE ####################
