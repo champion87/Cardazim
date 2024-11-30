@@ -4,6 +4,7 @@ import sys
 from utils import unpack_message
 
 BACKLOG_SIZE = 1
+RECV_BUFSIZE = 4096
 
 def read_all_data(socket: socket.socket) -> str:
     """
@@ -18,8 +19,7 @@ def read_all_data(socket: socket.socket) -> str:
     
     with socket:
         while True:
-            data = socket.recv(4096)
-            if not data:
+            if not (data := socket.recv(RECV_BUFSIZE)):
                 break
 
             from_client += data
@@ -43,7 +43,7 @@ def init_server_socket(server_ip: str, server_port: int) -> None:
 
     return server_socket
 
-def listener_server(server_ip: str, server_port: int) -> None:
+def run_listener_server(server_ip: str, server_port: int) -> None:
     """
     Opens a server on 'server_ip' at port 'server_port'.
     The server opens a listening thread for each connection
@@ -86,7 +86,7 @@ def main() -> None:
 
 
     try:
-        listener_server(args.server_ip, args.server_port)
+        run_listener_server(args.server_ip, args.server_port)
         print('Done.')
     except Exception as error:
         print(f'ERROR: {error}')
