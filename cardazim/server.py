@@ -22,8 +22,7 @@ def read_all_data(socket: socket.socket) -> str:
     
     with socket:
         while True:
-            data = socket.recv(4096)
-            if not data:
+            if not (data := socket.recv(RECV_BUFSIZE)):
                 break
 
             from_client += data
