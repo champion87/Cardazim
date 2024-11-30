@@ -1,7 +1,9 @@
 import socket
 import argparse
 import sys
+import threading
 from utils import unpack_message
+import threading
 
 BACKLOG_SIZE = 1
 RECV_BUFSIZE = 4096
@@ -25,6 +27,26 @@ def read_all_data(socket: socket.socket) -> str:
             from_client += data
 
     return unpack_message(from_client)
+
+
+def listener_thread(
+        print_lock: threading.Lock,
+        client_socket: socket.socket
+        ) -> None:
+    """
+    Reads the message from a socket (until the connection is closed)
+    and syncronuously prints it to the screen.
+
+    :param print_lock: The lock that is used for syncronizing the prints between other threads.
+    :type threading.Lock:
+    :param client_socket: The socket from which the data is read.
+    :type socket.socket:
+
+    """
+    msg = read_all_data(client_socket)
+
+    with print_lock:
+        print (f'Received message: {msg}')
 
 
 def init_server_socket(server_ip: str, server_port: int) -> None:
@@ -54,14 +76,25 @@ def run_listener_server(server_ip: str, server_port: int) -> None:
     :param server_port:
     :type int:
     """
+    print_lock = threading.Lock()
+
     with init_server_socket(server_ip, server_port) as server_socket:
 
         while True:
             client_socket, client_addr = server_socket.accept()
+            
+            threading.Thread(target=listener_thread, kwargs={"print_lock":print_lock, "client_socket":client_socket}).start()
 
-            from_client = read_all_data(client_socket)
-            print (f'Received message: {from_client}')
+    
+    # Wait for all threads to finish.
+    # 
+    # this code is unreachable, but if one day I'd want to support quitting while running the server,
+    # I would have then to break from the loop and reach this code.
+    for thread in threading.enumerate():
+        if thread is not threading.main_thread():  # Skip the main thread
+            thread.join()
 
+            
 
 def get_args() -> argparse.Namespace:
     """
