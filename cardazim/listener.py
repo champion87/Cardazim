@@ -1,7 +1,7 @@
 from connection import Connection
 import socket
 
-class Listner:
+class Listener:
     def __init__(self, host_ip:str, port:int, backlog_size:int=1000):
         """
         Initializes a Listener object with the specified host IP, port, and backlog size.
