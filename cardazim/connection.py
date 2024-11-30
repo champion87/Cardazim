@@ -1,21 +1,29 @@
+from __future__ import annotations
+import socket
+from utils import pack_message
+
 class Connection:
-    def __init__(connection: socket.socket):
-        pass
+    
+    def __init__(self, connection: socket.socket):
+        self.connection: socket.socket = connection
 
     @classmethod
-    def connect(cls, host, port):
+    def connect(cls, target_host_ip:str, port:int) -> Connection:
         pass
 
-    def close(self):
-        pass
+    def close(self) -> None:
+        self.connection.close()
 
-    def __repr__(self):
-        pass
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} from {self.connection.getsockname()} to {self.connection.getsockname()}>"
 
     def send_message(self, message: bytes):
-        pass
+        client.sendall(pack_message(message))
 
     def recieve_message(self):
+        """
+        :raises Exception: If the connection was closed before the message was fully recieved
+        """
         pass
 
     def __enter__(self):
