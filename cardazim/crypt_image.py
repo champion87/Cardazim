@@ -7,13 +7,15 @@ from PIL import Image
 
 class CryptImage:
     """Class for CryptImage."""
-    def __init__(self, image:Image, key_hash:bytes):
+    def __init__(self, image:Image, key_hash:bytes|None):
         self.image:Image = image
-        self.key_hash:bytes = key_hash
+        self.key_hash:bytes|None = key_hash
 
     @classmethod
     def create_from_path(cls, path:str|PathLike) -> CryptImage:
         """Loads an image from a given path."""
+        image = Image.open(path)
+        return cls(image, None)
 
     def encrypt(self, key:str) -> None:
         """Encrypts the binary data of the image using AES over the hash of the given key."""
