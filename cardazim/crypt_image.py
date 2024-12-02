@@ -1,8 +1,6 @@
 """Implementation of the CrypteImage module."""
 from __future__ import annotations
 from os import PathLike
-import hashlib
-from Crypto.Cipher import AES
 from PIL import Image
 
 class CryptImage:

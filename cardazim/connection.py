@@ -1,6 +1,6 @@
 from __future__ import annotations
 import socket
-from utils import pack_message, unpack_message, init_server_socket
+from utils import pack_message, unpack_message
 
 RECV_BUFSIZE = 4096
 

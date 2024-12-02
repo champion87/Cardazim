@@ -1,11 +1,9 @@
 import argparse
-import socket
 import sys
 import threading
 
 from connection import Connection
 from listener import Listener
-from utils import init_server_socket, unpack_message
 
 
 def listener_thread(print_lock: threading.Lock, client_connection: Connection) -> None:

@@ -1,8 +1,5 @@
 import argparse
 import sys
-import struct
-import socket
-import math
 from connection import Connection
 
 ###########################################################
