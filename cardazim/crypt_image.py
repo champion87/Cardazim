@@ -59,7 +59,7 @@ class CryptImage:
         :return: The created Image, and the amount of bytes used.
         """
         # First, unpack the height and width of the image
-        height, width = struct.unpack("ii", data[:8])
+        height, width = struct.unpack("II", data[:8])
 
         # Calculate pixel data size for RGB (3 bytes per pixel)
         pixel_data_size = height * width * 3
@@ -93,5 +93,6 @@ class CryptImage:
         
         decrypted = perform_crypto_on_image(self.key_hash, self.image, CryptoAction.DECRYPT)
         self.image = decrypted
+        return True
 
     

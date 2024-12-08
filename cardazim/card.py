@@ -33,17 +33,17 @@ class Card:
         """"""
         name_len = len(self.name)
         creator_len = len(self.creator)
-        w,h = self.image.size
+        w,h = self.image.image.size
         len_of_riddle = len(self.riddle)
         return struct.pack(
-            f"i{name_len}si{creator_len}sii{h*w*3}s32si{len_of_riddle}s",
+            f"I{name_len}sI{creator_len}sII{h*w*3}s32sI{len_of_riddle}s",
             name_len,
             self.name.encode("utf-8"),
             creator_len,
             self.creator.encode("utf-8"),
             h,
             w,
-            self.image.tobytes(),
+            self.image.image.tobytes(),
             self.image.key_hash,
             len_of_riddle,
             self.riddle.encode("utf-8")
@@ -70,7 +70,7 @@ class Card:
         # Extract the name length
         name_length_start = 0
         name_length_end = name_length_start + 4
-        (name_length,) = struct.unpack("i", data[name_length_start:name_length_end])
+        (name_length,) = struct.unpack("I", data[name_length_start:name_length_end])
 
         # Extract the name string
         name_start = name_length_end
@@ -80,18 +80,24 @@ class Card:
         # Extract the creator length
         creator_length_start = name_end
         creator_length_end = creator_length_start + 4
-        (creator_length,) = struct.unpack("i", data[creator_length_start:creator_length_end])
+        (creator_length,) = struct.unpack("I", data[creator_length_start:creator_length_end])
 
         # Extract the creator string
         creator_start = creator_length_end
         creator_end = creator_start + creator_length
+
+        print(f"Name length: {name_length}")
+        print(f"Name slice: {name_start} {name_end}")
+        print(f"Creator length: {creator_length}")
+        print(f"Creator slice: {creator_start} {creator_end}")
+
         creator = data[creator_start:creator_end].decode("utf-8")
 
-        image, riddle_length_start = CryptImage.create_from_bytes(data[creator_end:])
-
+        image, image_data_len = CryptImage.create_from_bytes(data[creator_end:])
+        riddle_length_start = creator_end + image_data_len
         # Extract the riddle length
         riddle_length_end = riddle_length_start + 4
-        (riddle_length,) = struct.unpack("i", data[riddle_length_start:riddle_length_end])
+        (riddle_length,) = struct.unpack("I", data[riddle_length_start:riddle_length_end])
 
         # Extract the riddle string
         riddle_start = riddle_length_end
