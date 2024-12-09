@@ -4,6 +4,33 @@ from crypt_image import CryptImage
 import struct
 from os import PathLike
 
+def round_up_to_multiple(n: int, multiple: int) -> int:
+    """
+    Rounds up the given number to the nearest multiple of the specified value.
+
+    :param n: The number to be rounded up.
+    :type n: int
+    :param multiple: The multiple to which the number should be rounded up.
+    :type multiple: int
+    :return: The rounded up number.
+    :rtype: int
+    """
+    return n + multiple - 1 - (n - 1) % multiple
+
+def pack_str(s: str) -> bytes:
+    return struct.pack(f"I{len(s)}s", len(s), s.encode("utf-8"))
+
+def unpack_str(data: bytes) -> tuple[bytes, str]:
+    """
+    Unpacks a byte sequence into a tuple containing the remaining bytes and a decoded string.
+
+    :param data: The byte sequence to unpack. The first 4 bytes represent the length of the string.
+    :return: A tuple where the first element is the remaining bytes after the string, and the second element is the decoded string.
+    """
+    (length,) = struct.unpack("I", data[:4])
+
+    return data[4 + round_up_to_multiple(4, length):], data[4:4 + length].decode("utf-8")
+
 class Card:
     "a class representing a card with image and a riddle."
     def __init__(self, name:str, creator:str, image:CryptImage, riddle:str, solution:str|None):
@@ -35,8 +62,8 @@ class Card:
         creator_len = len(self.creator)
         w,h = self.image.image.size
         len_of_riddle = len(self.riddle)
-        return struct.pack(
-            f"I{name_len}sI{creator_len}sII{h*w*3}s32sI{len_of_riddle}s",
+        res = struct.pack(
+            f"=I{name_len}sI{creator_len}sII{h*w*3}s32sI{len_of_riddle}s",
             name_len,
             self.name.encode("utf-8"),
             creator_len,
@@ -48,6 +75,10 @@ class Card:
             len_of_riddle,
             self.riddle.encode("utf-8")
         )
+        print(f"Name length: {name_len}")
+        print(f"creator length: {creator_len}")
+        print(res[:20])
+        return res
     
     @classmethod
     def deserialize(cls, data: bytes) -> Card:

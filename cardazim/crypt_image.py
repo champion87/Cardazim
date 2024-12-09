@@ -47,6 +47,24 @@ class CryptImage:
         image = Image.open(path)
         return cls(image, None)
 
+    def serialize(self):
+        """
+        Serializes the image data into a byte sequence.
+
+        The serialized data format:
+        - Image height (4 bytes)
+        - Image width (4 bytes)
+        - Pixel data (h * w * 3 bytes for RGB mode)
+        - Key hash (32 bytes)
+        """
+        # Extract the image data
+        width, height = self.image.size
+        pixel_data = self.image.tobytes()
+
+        # Serialize the image data
+        data = struct.pack("II", height, width) + pixel_data + self.key_hash
+        return data
+
     @classmethod
     def create_from_bytes(cls, data:bytes):
         """
