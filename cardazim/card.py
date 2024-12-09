@@ -1,8 +1,12 @@
 """Implementation of class Card"""
 from __future__ import annotations
-from crypt_image import CryptImage
+
 import struct
 from os import PathLike
+from typing import Optional, Tuple
+
+from crypt_image import CryptImage
+
 
 def round_up_to_multiple(n: int, multiple: int) -> int:
     """
@@ -18,32 +22,68 @@ def round_up_to_multiple(n: int, multiple: int) -> int:
     return n + multiple - 1 - (n - 1) % multiple
 
 def pack_str(s: str) -> bytes:
+    """
+    Packs a string into bytes with its length prefixed.
+
+    :param s: The string to pack.
+    :type s: str
+    :return: The packed bytes.
+    :rtype: bytes
+    """
     return struct.pack(f"I{len(s)}s", len(s), s.encode("utf-8"))
 
-def unpack_str(data: bytes) -> tuple[bytes, str]:
+def unpack_str(data: bytes) -> Tuple[bytes, str]:
     """
     Unpacks a byte sequence into a tuple containing the remaining bytes and a decoded string.
 
     :param data: The byte sequence to unpack. The first 4 bytes represent the length of the string.
+    :type data: bytes
     :return: A tuple where the first element is the remaining bytes after the string, and the second element is the decoded string.
+    :rtype: tuple[bytes, str]
     """
     (length,) = struct.unpack("I", data[:4])
-
     return data[4 + round_up_to_multiple(4, length):], data[4:4 + length].decode("utf-8")
 
 class Card:
-    "a class representing a card with image and a riddle."
-    def __init__(self, name:str, creator:str, image:CryptImage, riddle:str, solution:str|None):
-        self.name:str = name
-        self.creator:str = creator
-        self.image:CryptImage = image
-        self.riddle:str = riddle
-        self.solution:str|None = solution
+    """A class representing a card with an image and a riddle."""
+    
+    def __init__(self, name: str, creator: str, image: CryptImage, riddle: str, solution: Optional[str]):
+        """
+        Initializes a Card instance.
+
+        :param name: The name of the card.
+        :type name: str
+        :param creator: The creator of the card.
+        :type creator: str
+        :param image: The image associated with the card.
+        :type image: CryptImage
+        :param riddle: The riddle on the card.
+        :type riddle: str
+        :param solution: The solution to the riddle, if any.
+        :type solution: Optional[str]
+        """
+        self.name: str = name
+        self.creator: str = creator
+        self.image: CryptImage = image
+        self.riddle: str = riddle
+        self.solution: Optional[str] = solution
 
     def __repr__(self) -> str:
+        """
+        Returns a string representation of the Card instance.
+
+        :return: The string representation.
+        :rtype: str
+        """
         return f"<{self.__class__.__name__} name={self.name}, creator={self.creator}>"
 
     def __str__(self) -> str:
+        """
+        Returns a user-friendly string representation of the Card instance.
+
+        :return: The user-friendly string representation.
+        :rtype: str
+        """
         solution_status = self.solution if self.solution else "unsolved"
         return (
             f"{self.__class__.__name__} {self.name} by {self.creator}\n"
@@ -52,12 +92,32 @@ class Card:
         )
 
     @classmethod
-    def create_from_path(cls, name:str, creator:str, path:str|PathLike, riddle:str, solution:str) -> Card:
-        """"""
+    def create_from_path(cls, name: str, creator: str, path: str | PathLike, riddle: str, solution: Optional[str]) -> Card:
+        """
+        Creates a Card instance from an image file path.
+
+        :param name: The name of the card.
+        :type name: str
+        :param creator: The creator of the card.
+        :type creator: str
+        :param path: The file path to the image.
+        :type path: str | PathLike
+        :param riddle: The riddle on the card.
+        :type riddle: str
+        :param solution: The solution to the riddle, if any.
+        :type solution: Optional[str]
+        :return: The created Card instance.
+        :rtype: Card
+        """
         return cls(name, creator, CryptImage.create_from_path(path), riddle, solution)
         
     def serialize(self) -> bytes:
-        """"""
+        """
+        Serializes the Card instance into bytes.
+
+        :return: The serialized bytes.
+        :rtype: bytes
+        """
         res = pack_str(self.name) + pack_str(self.creator) + self.image.serialize() + pack_str(self.riddle)
         return res
     
@@ -79,7 +139,17 @@ class Card:
         :return: The deserialized Card instance.
         :rtype: Card
         """
-        def extract_string(data: bytes, start: int) -> tuple[str, int]:
+        def extract_string(data: bytes, start: int) -> Tuple[str, int]:
+            """
+            Extracts a string from the byte data starting at the given index.
+
+            :param data: The byte data.
+            :type data: bytes
+            :param start: The starting index.
+            :type start: int
+            :return: A tuple containing the extracted string and the end index.
+            :rtype: tuple[str, int]
+            """
             length = struct.unpack("I", data[start:start + 4])[0]
             end = start + 4 + length
             return data[start + 4:end].decode("utf-8"), end

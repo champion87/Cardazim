@@ -1,25 +1,42 @@
 """Implementation of the CrypteImage module."""
 from __future__ import annotations
-from os import PathLike
-from PIL import Image
-from Crypto.Cipher import AES
-from io import BytesIO
+
 import hashlib
-from enum import Enum
 import struct
+from enum import Enum
+from os import PathLike
+
+from Crypto.Cipher import AES
+from PIL import Image
+
 
 class CryptoAction(Enum):
+    """An enumeration representing the action to perform on the image."""
     ENCRYPT = 1
     DECRYPT = 2
 
-def double_hash(key:str) -> bytes:
+def double_hash(key: str) -> bytes:
+    """
+    Generates a double SHA-256 hash of the given key.
+
+    :param key: The key to hash.
+    :return: The double hashed key as bytes.
+    """
     key_bytes = key.encode("utf-8")
     first_hash_object = hashlib.sha256(key_bytes)
     first_hash = first_hash_object.digest()
     second_hash_object = hashlib.sha256(first_hash)
     return second_hash_object.digest()
 
-def perform_crypto_on_image(key_hash:bytes, image:Image, action:CryptoAction) -> Image:
+def perform_crypto_on_image(key_hash: bytes, image: Image, action: CryptoAction) -> Image:
+    """
+    Performs encryption or decryption on the given image using the provided key hash.
+
+    :param key_hash: The hash of the key to use for encryption/decryption.
+    :param image: The image to encrypt/decrypt.
+    :param action: The action to perform (CryptoAction.ENCRYPT or CryptoAction.DECRYPT).
+    :return: The processed image.
+    """
     cipher = AES.new(key_hash, AES.MODE_EAX, nonce=b'arazim')
     size, mode = image.size, image.mode
     data = image.tobytes()
@@ -36,18 +53,28 @@ def perform_crypto_on_image(key_hash:bytes, image:Image, action:CryptoAction) ->
 class CryptImage:
     """Class for CryptImage."""
 
-    def __init__(self, image:Image, key_hash:bytes|None):
-        self.image:Image = image
-        self.key_hash:bytes|None = key_hash
+    def __init__(self, image: Image, key_hash: bytes | None):
+        """
+        Initializes the CryptImage instance.
 
+        :param image: The image to be encrypted/decrypted.
+        :param key_hash: The hash of the key used for encryption/decryption.
+        """
+        self.image: Image = image
+        self.key_hash: bytes | None = key_hash
 
     @classmethod
-    def create_from_path(cls, path:str|PathLike) -> CryptImage:
-        """Loads an image from a given path."""
+    def create_from_path(cls, path: str | PathLike) -> CryptImage:
+        """
+        Loads an image from a given path.
+
+        :param path: The path to the image file.
+        :return: An instance of CryptImage.
+        """
         image = Image.open(path)
         return cls(image, None)
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """
         Serializes the image data into a byte sequence.
 
@@ -56,6 +83,8 @@ class CryptImage:
         - Image width (4 bytes)
         - Pixel data (h * w * 3 bytes for RGB mode)
         - Key hash (32 bytes)
+
+        :return: The serialized byte sequence.
         """
         # Extract the image data
         width, height = self.image.size
@@ -66,15 +95,18 @@ class CryptImage:
         return data
 
     @classmethod
-    def create_from_bytes(cls, data:bytes):
+    def create_from_bytes(cls, data: bytes) -> tuple[CryptImage, int]:
         """
+        Creates a CryptImage instance from a byte sequence.
+
         The serialized data format:
         - Image height (4 bytes)
         - Image width (4 bytes)
         - Pixel data (h * w * 3 bytes for RGB mode)
         - Key hash (32 bytes)
 
-        :return: The created Image, and the amount of bytes used.
+        :param data: The byte sequence to deserialize.
+        :return: A tuple containing the created CryptImage instance and the number of bytes used.
         """
         # First, unpack the height and width of the image
         height, width = struct.unpack("II", data[:8])
@@ -85,7 +117,7 @@ class CryptImage:
         pixel_data_end = pixel_data_start + pixel_data_size
         pixel_data = data[pixel_data_start:pixel_data_end]
 
-         # Reconstruct the image using PIL
+        # Reconstruct the image using PIL
         image = Image.frombytes("RGB", (width, height), pixel_data)
 
         # Extract the key hash (32 bytes)
@@ -97,20 +129,26 @@ class CryptImage:
 
         return cls(image, key_hash), total_data_len
 
-    def encrypt(self, key:str) -> None:
-        """Encrypts the binary data of the image using AES over the hash of the given key."""
+    def encrypt(self, key: str) -> None:
+        """
+        Encrypts the binary data of the image using AES over the hash of the given key.
+
+        :param key: The key to use for encryption.
+        """
         self.key_hash = double_hash(key)
         encrypted = perform_crypto_on_image(self.key_hash, self.image, CryptoAction.ENCRYPT)
         self.image = encrypted
-        
 
-    def decrypt(self, key:str) -> bool:
-        """Decrypts the binary of the image with the given key's hash."""
+    def decrypt(self, key: str) -> bool:
+        """
+        Decrypts the binary of the image with the given key's hash.
+
+        :param key: The key to use for decryption.
+        :return: True if decryption was successful, False otherwise.
+        """
         if self.key_hash != double_hash(key):
             return False
-        
+
         decrypted = perform_crypto_on_image(self.key_hash, self.image, CryptoAction.DECRYPT)
         self.image = decrypted
         return True
-
-    
