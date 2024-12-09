@@ -58,26 +58,7 @@ class Card:
         
     def serialize(self) -> bytes:
         """"""
-        name_len = len(self.name)
-        creator_len = len(self.creator)
-        w,h = self.image.image.size
-        len_of_riddle = len(self.riddle)
-        res = struct.pack(
-            f"=I{name_len}sI{creator_len}sII{h*w*3}s32sI{len_of_riddle}s",
-            name_len,
-            self.name.encode("utf-8"),
-            creator_len,
-            self.creator.encode("utf-8"),
-            h,
-            w,
-            self.image.image.tobytes(),
-            self.image.key_hash,
-            len_of_riddle,
-            self.riddle.encode("utf-8")
-        )
-        print(f"Name length: {name_len}")
-        print(f"creator length: {creator_len}")
-        print(res[:20])
+        res = pack_str(self.name) + pack_str(self.creator) + self.image.serialize() + pack_str(self.riddle)
         return res
     
     @classmethod
@@ -98,44 +79,15 @@ class Card:
         :return: The deserialized Card instance.
         :rtype: Card
         """
-        # Extract the name length
-        name_length_start = 0
-        name_length_end = name_length_start + 4
-        (name_length,) = struct.unpack("I", data[name_length_start:name_length_end])
+        def extract_string(data: bytes, start: int) -> tuple[str, int]:
+            length = struct.unpack("I", data[start:start + 4])[0]
+            end = start + 4 + length
+            return data[start + 4:end].decode("utf-8"), end
 
-        # Extract the name string
-        name_start = name_length_end
-        name_end = name_start + name_length
-        name = data[name_start:name_end].decode("utf-8")
-
-        # Extract the creator length
-        creator_length_start = name_end
-        creator_length_end = creator_length_start + 4
-        (creator_length,) = struct.unpack("I", data[creator_length_start:creator_length_end])
-
-        # Extract the creator string
-        creator_start = creator_length_end
-        creator_end = creator_start + creator_length
-
-        print(f"Name length: {name_length}")
-        print(f"Name slice: {name_start} {name_end}")
-        print(f"Creator length: {creator_length}")
-        print(f"Creator slice: {creator_start} {creator_end}")
-
-        creator = data[creator_start:creator_end].decode("utf-8")
+        name, name_end = extract_string(data, 0)
+        creator, creator_end = extract_string(data, name_end)
 
         image, image_data_len = CryptImage.create_from_bytes(data[creator_end:])
-        riddle_length_start = creator_end + image_data_len
-        # Extract the riddle length
-        riddle_length_end = riddle_length_start + 4
-        (riddle_length,) = struct.unpack("I", data[riddle_length_start:riddle_length_end])
+        riddle, _ = extract_string(data, creator_end + image_data_len)
 
-        # Extract the riddle string
-        riddle_start = riddle_length_end
-        riddle_end = riddle_start + riddle_length
-        riddle = data[riddle_start:riddle_end].decode("utf-8")
-
-    
-
-        # Return the reconstructed Card instance
         return cls(name, creator, image, riddle, None)
