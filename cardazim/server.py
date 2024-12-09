@@ -1,16 +1,31 @@
-import socket
+"""
+This module implements a server that listens for connections and prints received messages.
+The server is implemented using 'Connection' and 'Listener' classes from the 'connection' module.
+
+Functions:
+    listener_thread(...) -> None:
+        Reads messages from a connection and prints them.
+
+    listener_server(...) -> None:
+        Opens a server and starts a listening thread for each connection.
+
+    get_args() -> argparse.Namespace:
+        Parses command line arguments for server IP and port.
+
+    main() -> None:
+        Runs the server using command line arguments.
+"""
+
 import argparse
 import sys
 import threading
-from utils import unpack_message, init_server_socket
-from listener import Listener
+
+from card import Card
 from connection import Connection
+from listener import Listener
 
 
-def listener_thread(
-        print_lock: threading.Lock,
-        client_connection: Connection
-        ) -> None:
+def listener_thread(print_lock: threading.Lock, client_connection: Connection) -> None:
     """
     Reads the message from a Connection (until the connection is closed)
     and syncronuously prints it to the screen.
@@ -22,9 +37,10 @@ def listener_thread(
 
     """
     with client_connection:
-        msg = client_connection.recieve_message().decode("utf-8")
+        data = client_connection.recieve_message()
+        card = Card.deserialize(data)
         with print_lock:
-            print(f'Received message: {msg}')
+            print(f"Received card: {card}")
 
 
 def listener_server(server_ip: str, server_port: int) -> None:
@@ -32,8 +48,8 @@ def listener_server(server_ip: str, server_port: int) -> None:
     Opens a server on 'server_ip' at port 'server_port'.
     The server opens a listening thread for each connection
     and prints to the screen every message that it recieves.
-    
-    :param server_ip: 
+
+    :param server_ip:
     :type str:
     :param server_port:
     :type int:
@@ -43,48 +59,39 @@ def listener_server(server_ip: str, server_port: int) -> None:
     with Listener(server_ip, server_port) as listener:
         while True:
             conn = listener.accept()
-            threading.Thread(target=listener_thread, kwargs={"print_lock":print_lock, "client_connection":conn}).start()
+            threading.Thread(
+                target=listener_thread,
+                kwargs={"print_lock": print_lock, "client_connection": conn},
+            ).start()
 
-    
-    # Wait for all threads to finish.
-    # 
-    # this code is unreachable, but if one day I'd want to support quitting while running the server,
-    # I would have then to break from the loop and reach this code.
-    for thread in threading.enumerate():
-        if thread is not threading.main_thread():  # Skip the main thread
-            thread.join()
-
-            
 
 def get_args() -> argparse.Namespace:
     """
     Parse the command line arguments required to run the server.
 
-    :returns: The parsed arguments, as an 'argparse.Namespace' object. Example for usage: 'get_args().server_ip'
+    :returns: The parsed arguments, as an 'argparse.Namespace' object.
+    Example for usage: 'get_args().server_ip'
     :rtype: argparse.Namespace
     """
-    parser = argparse.ArgumentParser(description='Run a server that listens for data.')
-    parser.add_argument('server_ip', type=str,
-                        help='the server\'s ip')
-    parser.add_argument('server_port', type=int,
-                        help='the server\'s port')
+    parser = argparse.ArgumentParser(description="Run a server that listens for data.")
+    parser.add_argument("server_ip", type=str, help="the server's ip")
+    parser.add_argument("server_port", type=int, help="the server's port")
     return parser.parse_args()
 
 
 def main() -> None:
-    '''
+    """
     Implementation of CLI and sending data to server.
-    '''
+    """
     args = get_args()
-
 
     try:
         listener_server(args.server_ip, args.server_port)
-        print('Done.')
+        print("Done.")
     except Exception as error:
-        print(f'ERROR: {error}')
+        print(f"ERROR: {error}")
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
