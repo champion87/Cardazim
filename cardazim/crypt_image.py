@@ -1,4 +1,5 @@
 """Implementation of the CrypteImage module."""
+
 from __future__ import annotations
 
 import hashlib
@@ -12,8 +13,10 @@ from PIL import Image
 
 class CryptoAction(Enum):
     """An enumeration representing the action to perform on the image."""
+
     ENCRYPT = 1
     DECRYPT = 2
+
 
 def double_hash(key: str) -> bytes:
     """
@@ -28,7 +31,10 @@ def double_hash(key: str) -> bytes:
     second_hash_object = hashlib.sha256(first_hash)
     return second_hash_object.digest()
 
-def perform_crypto_on_image(key_hash: bytes, image: Image, action: CryptoAction) -> Image:
+
+def perform_crypto_on_image(
+    key_hash: bytes, image: Image, action: CryptoAction
+) -> Image:
     """
     Performs encryption or decryption on the given image using the provided key hash.
 
@@ -37,7 +43,7 @@ def perform_crypto_on_image(key_hash: bytes, image: Image, action: CryptoAction)
     :param action: The action to perform (CryptoAction.ENCRYPT or CryptoAction.DECRYPT).
     :return: The processed image.
     """
-    cipher = AES.new(key_hash, AES.MODE_EAX, nonce=b'arazim')
+    cipher = AES.new(key_hash, AES.MODE_EAX, nonce=b"arazim")
     size, mode = image.size, image.mode
     data = image.tobytes()
 
@@ -91,7 +97,8 @@ class CryptImage:
         pixel_data = self.image.tobytes()
 
         # Serialize the image data
-        data = struct.pack("II", height, width) + pixel_data + self.key_hash
+        key_hash = self.key_hash if self.key_hash else b"\x00" * 32
+        data = struct.pack("II", height, width) + pixel_data + key_hash
         return data
 
     @classmethod
@@ -136,7 +143,9 @@ class CryptImage:
         :param key: The key to use for encryption.
         """
         self.key_hash = double_hash(key)
-        encrypted = perform_crypto_on_image(self.key_hash, self.image, CryptoAction.ENCRYPT)
+        encrypted = perform_crypto_on_image(
+            self.key_hash, self.image, CryptoAction.ENCRYPT
+        )
         self.image = encrypted
 
     def decrypt(self, key: str) -> bool:
@@ -149,6 +158,8 @@ class CryptImage:
         if self.key_hash != double_hash(key):
             return False
 
-        decrypted = perform_crypto_on_image(self.key_hash, self.image, CryptoAction.DECRYPT)
+        decrypted = perform_crypto_on_image(
+            self.key_hash, self.image, CryptoAction.DECRYPT
+        )
         self.image = decrypted
         return True

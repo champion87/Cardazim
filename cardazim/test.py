@@ -11,5 +11,5 @@ data = card.serialize()
 card2 = Card.deserialize(data)
 if card2.image.decrypt(solution):
     card2.solution = solution
-assert(repr(card) == repr(card2))
-card2.image.image.save("card2.png", "png") # will show the same image as in path
+assert repr(card) == repr(card2)
+card2.image.image.save("card2.png", "png")  # will show the same image as in path

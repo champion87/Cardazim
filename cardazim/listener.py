@@ -1,8 +1,9 @@
 from connection import Connection
 import socket
 
+
 class Listener:
-    def __init__(self, host_ip:str, port:int, backlog_size:int=1000):
+    def __init__(self, host_ip: str, port: int, backlog_size: int = 1000):
         """
         Initializes a Listener object with the specified host IP, port, and backlog size.
 
@@ -14,11 +15,11 @@ class Listener:
         listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listener_socket.bind((host_ip, port))
-        
-        self.listener_socket : socket.socket = listener_socket
-        self.backlog_size : int = backlog_size
-        self.port : int = port
-        self.host_ip : str = host_ip
+
+        self.listener_socket: socket.socket = listener_socket
+        self.backlog_size: int = backlog_size
+        self.port: int = port
+        self.host_ip: str = host_ip
 
     def __repr__(self):
         return f"{self.__class__.__name__}(port={self.port}, host=_ip{self.host_ip}, backlog={self.backlog_size})"
